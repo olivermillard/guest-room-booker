@@ -1,6 +1,7 @@
 {
-  "name": "guest-room-booker",
+  "name": "client",
   "version": "0.1.0",
+  "proxy": "http://localhost:4000",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.5",
@@ -13,6 +14,7 @@
     "@types/react-native": "^0.65.24",
     "native-base": "^3.4.0",
     "react": "^18.2.0",
+    "react-date-range": "^1.4.0",
     "react-dom": "^18.2.0",
     "react-native-safe-area-context": "^3.4.1",
     "react-native-svg": "^12.4.4",
