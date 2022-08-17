@@ -6,7 +6,7 @@ const mongoose = require('mongoose')
 const Booking = require('./booking-model');
 
 const uri = 'mongodb+srv://olivermillard:Uv2pEuf2QjizdIlT@guestroombookings.jyol5ad.mongodb.net/guest-bookings?retryWrites=true&w=majority'
-const port = process.env.PORT || 4000;
+// const port = process.env.PORT || 4000;
 
 const cors = require("cors");
 const corsOptions = {
@@ -18,7 +18,13 @@ app.use(cors(corsOptions))
 
 async function connect() {
     try {
-        await mongoose.connect(uri)
+        await mongoose.connect(
+            process.env.MONGODB_URI || uri,
+            {
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+            },
+        )
     } catch (error) {
         console.error(error)
     }
@@ -30,6 +36,16 @@ app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })) // { extended: true }
 // app.use(morgan('dev'));
+
+app.get('/', (req, res) => {
+    Booking.find()
+        .then((result) => {
+            res.send(result);
+        })
+        .catch((error) => {
+            console.error(error);
+        });
+})
 
 app.get('/bookings', (req, res) => {
     Booking.find()
@@ -86,14 +102,17 @@ app.post('/send-email', function (req, res) {
         endDate: req.body.endDate,
     });
 
-    const mailOptions = {
+    const formattedSd = `${booking.startDate.getMonth()}/${booking.startDate.getDay()}/${booking.startDate.getYear()}`;
+    const formattedEd = `${booking.endDate.getMonth()}/${booking.endDate.getDay()}/${booking.endDate.getYear()}`;
+    
+    const mailToUserOptions = {
         from: 'guestroombooker@gmail.com',
         to: booking.guestEmail,
         subject: 'Application for guest bedroom',
-        text: `${booking._id}`
+        text: `Hey ${booking.guestName}!\nThank you for your interest in staying with us from ${formattedSd} to ${formattedEd}! We will get back to you shortly either confirming your dates or asking you to find other dates which will work better.\n\nWe look forward to seeing you soon!\n\nBest wishes,\nOliver and Chris`
     };
 
-    transporter.sendMail(mailOptions, function (error, info) {
+    transporter.sendMail(mailToUserOptions, function (error, info) {
         if (error) {
             console.log(error);
         } else {
@@ -107,7 +126,7 @@ app.post('/send-email', function (req, res) {
 //     res.json({ "users": ['user1', 'user2'] })
 // })
 
-app.listen(port, () => { console.log(`server started on port ${port}`) });
+app.listen(process.env.PORT || 4000, () => console.log(`server started on port ${process.env.PORT || 4000}`));
 
 
 
