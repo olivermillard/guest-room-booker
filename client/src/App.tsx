@@ -1,31 +1,27 @@
-import {
-    useColorMode,
-    Box,
-    Center,
-} from 'native-base';
 import React from 'react';
-import { DatePicker } from './components/DatePicker';
 import './index.css';
-
-// type CurrentPage = 'introduction' | 'datePicker' | 'successfulBooking'
+import {
+    Routes,
+    Route,
+    useLocation
+} from 'react-router-dom';
+import { ReqResponse } from './components/ReqResponse';
+import { ContactForm } from './components/ContactForm';
+import { DatePicker } from './components/DatePicker';
 
 function App() {
-    const { colorMode } = useColorMode();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-
-    // const [ currentPage, setCurrentPage ] = useState<CurrentPage>('datePicker');
+    // const { colorMode } = useColorMode();
+    const location = useLocation();
 
     return (
-        <Box
-            bg={colorMode === 'light' ? 'coolGray.50' : 'coolGray.900'}
-            minHeight="100vh"
-            justifyContent="center"
-            px={4}
-        >
-            <Center>
-                <DatePicker/>
-            </Center>
-        </Box>
+        <>
+            <Routes location={location} key={location.pathname}>
+                <Route path='/intro' element={<DatePicker />} />
+                <Route path='/' element={<DatePicker />} />
+                <Route path='/reqResponse' element={<ReqResponse/>} />
+                <Route path='/contact' element={<ContactForm/>} />
+            </Routes>
+        </>
     );
 }
 

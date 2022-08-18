@@ -5,32 +5,33 @@
  * The date picker component for finding calendar dates.
  *
  * Created on      August 12, 2022
- * @author          Oliver Millard
+ * @author         Oliver Millard
  *
  * ******************************************************************************/
 
+import React, { useEffect, useState } from 'react';
 import {
     Box,
     Button,
     Center,
     FormControl,
+    Heading,
+    HStack,
     Input,
-    Spacer,
-    Text,
+    // Text,
+    Spinner,
     WarningOutlineIcon,
 } from 'native-base';
-import React, {
-    useEffect,
-    useState
-} from 'react';
 import { DateRange, RangeKeyDict } from 'react-date-range';
-
-// import { DateRange, RangeKeyDict } from 'react-date-range';
+import { useNavigate } from 'react-router-dom';
+import { ContactFab } from './ContactFab';
 
 const londonTimezone = 'Europe/London';
 let attemptedBooking = false;
 
 const DatePicker = () => {
+    const navigate = useNavigate();
+
     const currDateString = new Date().toLocaleString('en-US', {timeZone: 'UTC'});
     const currDate = new Date(Date.parse(currDateString));
     const oneWeekAway = convertTimezone(
@@ -48,8 +49,8 @@ const DatePicker = () => {
     const [ backendData, setBackendData ] = useState<any>([{}]);
     const [ dataLoaded, setDataLoaded ] = useState(false);
 
-    const [ guestName, setGuestName ] = useState('Oliver Millard TEST'); // REMOVE THESE VALUES
-    const [ emailAddress, setEmailAddress ] = useState('olivermillard@gmail.com'); // REMOVE THESE VALUES
+    const [ guestName, setGuestName ] = useState('');
+    const [ emailAddress, setEmailAddress ] = useState('');
     const [ showNameError, setShowNameError ] = useState(false);
     const [ showDatesError, setShowDatesError ] = useState(false);
     const [ showEmailError, setShowEmailError ] = useState(false);
@@ -161,6 +162,11 @@ const DatePicker = () => {
             }
         }).then(response => {
             console.log('response:', response.json());
+            attemptedBooking = false;
+            navigate('/reqResponse', { state: {succReq: true }});
+        }).catch(error => {
+            console.error(error);
+            navigate('/reqResponse', { state: {succReq: false }});
         });
     };
 
@@ -194,110 +200,140 @@ const DatePicker = () => {
     };
 
     return (
-        <Box
-            borderRadius={20}
-            overflow='hidden'
-            bg='#eceff6'
+        <Center
+            minH='100vh'
+            minW='100vw'
         >
+            <ContactFab/>
             {dataLoaded ? (
-                <Box
-                    height={'100%'}
-                >
-                    <Center
-                        // pt='10px'
-                        alignItems="center"
-                        // bg='#eceff6'
-                        height='175px'
-                        p='20px'
+                <>
+                    <Heading
+                        fontWeight='700'
+                        color={'#606060'}
+                        mb='10px'
                     >
-                        {/* NAME */}
-                        <FormControl isInvalid={showNameError} >
-                            <FormControl.Label>
-                                {'Name'}
-                            </FormControl.Label>
-                            <Input
-                                placeholder="Enter your name"
-                                onChangeText={text => handleNameChange(text)}
-                                borderColor={'#a8a8a8'}
-                                _light={{
-                                    _pressed: { bg: 'primary.base' },
-                                    _hover: { bg: 'primary.buttonHover' },
-                                    _text: {
-                                        color: 'white',
-                                    },
-                                }}
-                            />
-                            <FormControl.ErrorMessage
-                                leftIcon={<WarningOutlineIcon size="xs" />}
-                            >
-                                {'Please enter your name'}
-                            </FormControl.ErrorMessage>
-                        </FormControl>
-                        <Spacer></Spacer>
-                        {/* EMAIL */}
-                        <FormControl isInvalid={showEmailError} >
-                            <FormControl.Label>
-                                {'Email'}
-                            </FormControl.Label>
-                            <Input
-                                placeholder="Enter your email address"
-                                onChangeText={text => handleEmailChange(text)}
-                                borderColor={'#a8a8a8'}
-                                type='email'
-                                _light={{
-                                    _pressed: { bg: 'primary.base' },
-                                    _hover: { bg: 'primary.buttonHover' },
-                                    _text: {
-                                        color: 'white',
-                                    },
-                                }}
-                            />
-                            <FormControl.ErrorMessage
-                                leftIcon={<WarningOutlineIcon size="xs" />}
-                            >
-                                {'Please enter your email address'}
-                            </FormControl.ErrorMessage>
-                        </FormControl>
-                    </Center>
-                    {/* DATE RANGE PICKER */}
+                        {'Request Dates to Visit'}
+                    </Heading>
                     <Box
-                        p='20px'
-                        borderRadius={10}
-                        h='485px' // computed height of date range and error message
+                        borderRadius={20}
+                        // overflow='hidden'
+                        h='100%'
+                        bg={dataLoaded ? '#eceff6' : 'white'}
                     >
-                        <FormControl isInvalid={showDatesError}>
-                            <FormControl.Label>
-                                {'Dates'}
-                            </FormControl.Label>
-                            <DateRange
-                                // editableDateInputs={true}
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                onChange={(item: any) => handleDateChange(item)}
-                                moveRangeOnFirstSelection={false}
-                                ranges={dateRanges}
-                                minDate={currDate}
-                                disabledDates={getDisabledDates()}
-                                scroll={{enabled: true}}
-                            />
-                            <FormControl.ErrorMessage
-                                leftIcon={<WarningOutlineIcon size="xs" />}
+                        <Box
+                            height={'100%'}
+                        >
+                            <Center
+                                alignItems="center"
+                                px='20px'
+                                h='200px'
                             >
-                                {'Please enter dates which are free'}
-                            </FormControl.ErrorMessage>
-                        </FormControl>
+                                {/* NAME */}
+                                <Box
+                                    h='90px'
+                                    w='100%'
+                                >
+                                    <FormControl isInvalid={showNameError} isRequired>
+                                        <FormControl.Label>
+                                            {'Name'}
+                                        </FormControl.Label>
+                                        <Input
+                                            placeholder="Enter your name"
+                                            onChangeText={text => handleNameChange(text)}
+                                            borderColor={'#a8a8a8'}
+                                            _light={{
+                                                _pressed: { bg: 'primary.base' },
+                                                _hover: { bg: 'primary.buttonHover' },
+                                                _text: {
+                                                    color: 'white',
+                                                },
+                                            }}
+                                        />
+                                        <FormControl.ErrorMessage
+                                            leftIcon={<WarningOutlineIcon size="xs" />}
+                                        >
+                                            {'Please enter your name'}
+                                        </FormControl.ErrorMessage>
+                                    </FormControl>
+                                </Box>
+                                {/* EMAIL */}
+                                <Box
+                                    h='90px'
+                                    w='100%'
+                                >
+                                    <FormControl isInvalid={showEmailError} isRequired>
+                                        <FormControl.Label>
+                                            {'Email'}
+                                        </FormControl.Label>
+                                        <Input
+                                            placeholder="Enter your email address"
+                                            onChangeText={text => handleEmailChange(text)}
+                                            borderColor={'#a8a8a8'}
+                                            type='email'
+                                            _light={{
+                                                _pressed: { bg: 'primary.base' },
+                                                _hover: { bg: 'primary.buttonHover' },
+                                                _text: {
+                                                    color: 'white',
+                                                },
+                                            }}
+                                        />
+                                        <FormControl.ErrorMessage
+                                            leftIcon={<WarningOutlineIcon size="xs" />}
+                                        >
+                                            {'Please enter your email address'}
+                                        </FormControl.ErrorMessage>
+                                    </FormControl>
+                                </Box>
+                            </Center>
+                            {/* DATE RANGE PICKER */}
+                            <Box
+                                px='20px'
+                                borderRadius={10}
+                                h='475px' // computed height of date range and error message
+                            >
+                                <FormControl isInvalid={showDatesError} isRequired>
+                                    <FormControl.Label>
+                                        {'Dates'}
+                                    </FormControl.Label>
+                                    <DateRange
+                                        // editableDateInputs={true}
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                        onChange={(item: any) => handleDateChange(item)}
+                                        moveRangeOnFirstSelection={false}
+                                        ranges={dateRanges}
+                                        minDate={currDate}
+                                        disabledDates={getDisabledDates()}
+                                        scroll={{enabled: true}}
+                                    />
+                                    <FormControl.ErrorMessage
+                                        leftIcon={<WarningOutlineIcon size="xs" />}
+                                    >
+                                        {'Please enter dates which are free'}
+                                    </FormControl.ErrorMessage>
+                                </FormControl>
+                            </Box>
+                            <Button
+                                onPress={()=>handleSubmit()}
+                                borderBottomLeftRadius={20}
+                                borderBottomRightRadius={20}
+                                bg='calendarBlue'
+                                colorScheme="blue"
+                            >
+                                {'Book Your Dates'}
+                            </Button>
+                        </Box>
                     </Box>
-                    <Button
-                        onPress={()=>handleSubmit()}
-                    >
-                        {'Book Your Dates'}
-                    </Button>
-                </Box>
+                </>
             ) : (
-                <Text>
-                    {'Loading...'}
-                </Text>
+                <HStack>
+                    <Spinner accessibilityLabel="Loading previous entries" />
+                    <Heading color="primary.500" fontSize="md" pl='10px'>
+                        {'Loading'}
+                    </Heading>
+                </HStack>
             ) }
-        </Box>
+        </Center>
     );
 };
 

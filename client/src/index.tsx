@@ -5,11 +5,25 @@ import { NativeBaseProvider, extendTheme } from 'native-base';
 import 'react-date-range/dist/styles.css'; // main style file
 import 'react-date-range/dist/theme/default.css'; // theme css file
 import ReactDOM from 'react-dom';
+import { BrowserRouter } from 'react-router-dom';
 
 const theme = extendTheme({
     config: {
         initialColorMode: 'light',
     },
+
+    fonts: {
+        heading: 'Lato',
+        body: 'Lato',
+        mono: 'Lato',
+    },
+
+    colors: {
+        primary: {
+            600: '#317aff', // overrides the cyan color on inputs
+        },
+        calendarBlue: '#317aff',
+    }
 });
 
 // extend the theme
@@ -29,11 +43,11 @@ declare module 'native-base' {
 // );
 
 ReactDOM.render(
-    <React.StrictMode>
+    <BrowserRouter>
         <NativeBaseProvider theme={theme}>
             <App />
         </NativeBaseProvider>
-    </React.StrictMode>,
+    </BrowserRouter>,
     document.getElementById('root')
 );
 
