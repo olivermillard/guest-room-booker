@@ -15,16 +15,18 @@ import {
     Button,
     Center,
     FormControl,
-    Heading,
     HStack,
     Input,
-    // Text,
+    Text,
     Spinner,
     WarningOutlineIcon,
+    VStack,
 } from 'native-base';
 import { DateRange, RangeKeyDict } from 'react-date-range';
 import { useNavigate } from 'react-router-dom';
 import { ContactFab } from './ContactFab';
+import { emailIsValid, handleTextChange } from '../utils/text';
+import { BACKEND_URL } from '../config';
 
 const londonTimezone = 'Europe/London';
 let attemptedBooking = false;
@@ -48,6 +50,7 @@ const DatePicker = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [ backendData, setBackendData ] = useState<any>([{}]);
     const [ dataLoaded, setDataLoaded ] = useState(false);
+    const [ isSubmitting, setIsSubmitting ] = useState(false);
 
     const [ guestName, setGuestName ] = useState('');
     const [ emailAddress, setEmailAddress ] = useState('');
@@ -64,7 +67,7 @@ const DatePicker = () => {
     ]);
 
     useEffect(() => {
-        fetch('./bookings').then(
+        fetch(`${BACKEND_URL}/bookings`).then(
             response => response.json()
         ).then(
             data => {
@@ -88,40 +91,12 @@ const DatePicker = () => {
         setDateRange([ item.selection ]);
     };
 
-    const handleNameChange = (entry: string) => {
-        const guestName = entry.trim();
-        setGuestName(guestName);
-
-        // if there is no guest name and the error isn't showing, show the error
-        if(!guestName && !showNameError){
-            setShowNameError(true);
-        }
-        // if there is a guest name and the error is showing, hide the error
-        else if(guestName && showNameError){
-            setShowNameError(false);
-        }
-    };
-
-    const handleEmailChange = (entry: string) => {
-        const emailAddress = entry.trim();
-        setEmailAddress(emailAddress);
-
-        // if there is no guest name and the error isn't showing, show the error
-        if(!emailAddress && !showEmailError){
-            setShowEmailError(true);
-        }
-        // if there is a guest name and the error is showing, hide the error
-        else if(emailAddress && showEmailError){
-            setShowEmailError(false);
-        }
-    };
-
     const handleSubmit = () => {
         attemptedBooking = true;
         const areDatesValid = checkDatesAreValid();
-
+        const emailCheck = emailIsValid(emailAddress);
         // check if there is an invalid entry
-        if(!areDatesValid || !guestName || !emailAddress) {
+        if(!areDatesValid || !guestName || !emailCheck) {
             // check if dates are invalid
             if(!areDatesValid) {
                 setShowDatesError(true);
@@ -141,7 +116,7 @@ const DatePicker = () => {
                 setShowEmailError(true);
             }
             else {
-                setShowEmailError(false);
+                setShowEmailError(emailCheck);
             }
 
             return;
@@ -154,15 +129,17 @@ const DatePicker = () => {
             endDate: dateRanges[0].endDate,
         };
 
-        fetch('./send-email', { // ./bookings
+        setIsSubmitting(true);
+
+        fetch(`${BACKEND_URL}/bookings`, { // ./bookings
             method: 'POST',
             body: JSON.stringify(postData),
             headers: {
                 'Content-Type': 'application/json'
             }
         }).then(response => {
-            console.log('response:', response.json());
-            attemptedBooking = false;
+            console.log('(OBM) response:', response.json());
+            // attemptedBooking = false;
             navigate('/reqResponse', { state: {succReq: true }});
         }).catch(error => {
             console.error(error);
@@ -199,21 +176,62 @@ const DatePicker = () => {
         return intersection === undefined ? true : false;
     };
 
+
     return (
         <Center
             minH='100vh'
             minW='100vw'
         >
-            <ContactFab/>
-            {dataLoaded ? (
-                <>
-                    <Heading
-                        fontWeight='700'
-                        color={'#606060'}
+            {isSubmitting ? <></> : <ContactFab/>}
+            {dataLoaded ? isSubmitting ?  (
+                <VStack
+                    h='300px'
+                    w='300px'
+                    shadow={5}
+                    borderRadius={10}
+                    justifyContent='center'
+                    alignItems='center'
+                    space={1}
+                >
+                    <Text fontSize='24px'>
+                        {'Hang Tight!'}
+                    </Text>
+                    <Text fontSize='16px'>
+                        {'We are processing your request'}
+                    </Text>
+                    <Spinner
+                        size={'lg'}
+                        color='calendarBlue'
+                        mt='20px'
+                    />
+                </VStack>
+            ) : (
+
+                <Box
+                    bg='calendarBlue'
+                    borderRadius={20}
+                >
+                    <VStack
+                        py='10px'
+                        alignItems={'center'}
                         mb='10px'
                     >
-                        {'Request Dates to Visit'}
-                    </Heading>
+                        <Text
+                            fontWeight='500'
+                            color={'white'}
+                            fontSize={'24px'}
+                            // mb='10px'
+                        >
+                            {'Request Dates to Visit'}
+                        </Text>
+                        <Text
+                            fontWeight='500'
+                            color={'white'}
+                            fontSize={'24px'}
+                        >
+                            {'Oliver and Chris'}
+                        </Text>
+                    </VStack>
                     <Box
                         borderRadius={20}
                         // overflow='hidden'
@@ -239,7 +257,14 @@ const DatePicker = () => {
                                         </FormControl.Label>
                                         <Input
                                             placeholder="Enter your name"
-                                            onChangeText={text => handleNameChange(text)}
+                                            onChangeText={text => {
+                                                handleTextChange(
+                                                    text,
+                                                    setGuestName,
+                                                    showNameError,
+                                                    setShowNameError,
+                                                );
+                                            }}
                                             borderColor={'#a8a8a8'}
                                             _light={{
                                                 _pressed: { bg: 'primary.base' },
@@ -267,7 +292,14 @@ const DatePicker = () => {
                                         </FormControl.Label>
                                         <Input
                                             placeholder="Enter your email address"
-                                            onChangeText={text => handleEmailChange(text)}
+                                            onChangeText={text => {
+                                                handleTextChange(
+                                                    text,
+                                                    setEmailAddress,
+                                                    showEmailError,
+                                                    setShowEmailError,
+                                                );
+                                            }}
                                             borderColor={'#a8a8a8'}
                                             type='email'
                                             _light={{
@@ -281,7 +313,7 @@ const DatePicker = () => {
                                         <FormControl.ErrorMessage
                                             leftIcon={<WarningOutlineIcon size="xs" />}
                                         >
-                                            {'Please enter your email address'}
+                                            {'Please enter a valid email address'}
                                         </FormControl.ErrorMessage>
                                     </FormControl>
                                 </Box>
@@ -315,22 +347,30 @@ const DatePicker = () => {
                             </Box>
                             <Button
                                 onPress={()=>handleSubmit()}
-                                borderBottomLeftRadius={20}
-                                borderBottomRightRadius={20}
+                                borderBottomLeftRadius={16}
+                                borderBottomRightRadius={16}
                                 bg='calendarBlue'
                                 colorScheme="blue"
+                                disabled={isSubmitting} // don't allow resubmits
                             >
                                 {'Book Your Dates'}
                             </Button>
                         </Box>
                     </Box>
-                </>
+                </Box>
             ) : (
                 <HStack>
-                    <Spinner accessibilityLabel="Loading previous entries" />
-                    <Heading color="primary.500" fontSize="md" pl='10px'>
+                    <Spinner
+                        accessibilityLabel="Loading previous entries"
+                        color='calendarBlue'
+                    />
+                    <Text
+                        fontSize={'24px'}
+                        color='calendarBlue'
+                        pl='10px'
+                    >
                         {'Loading'}
-                    </Heading>
+                    </Text>
                 </HStack>
             ) }
         </Center>
