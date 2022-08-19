@@ -105,7 +105,26 @@ app.post('/bookings', (req, res) => {
             console.log('(OBM) EMAIL SENT: ' + info.response);
         }
     })
+
+    const mailToAdminOptions = {
+        from: 'guestroombooker@gmail.com',
+        to: 'olivermillard@gmail.com',
+        subject: 'New request for guest bedroom',
+        html: `Hey Oliver!\n\n${booking.guestName} has requested to stay with you from ${formattedSd} to ${formattedEd}! 
+        <a href=https://guest-room-booker.herokuapp.com/confirm/${booking._id}>Confirm</a>\n
+        <a href=https://guest-room-booker.herokuapp.com/deny/${booking._id}/>Deny</a>
+        \n\n${booking.guestName}'s fate is in your hands!`
+    };
+
+    transporter.sendMail(mailToAdminOptions, function (error, info) {
+        if (error) {
+            console.error(error);
+        } else {
+            console.log('(OBM) EMAIL SENT: ' + info.response);
+        }
+    })
 })
+
 
 app.get('/find-booking', (req, res) => {
     Booking.findById(res.body.booking)
@@ -118,6 +137,58 @@ app.get('/find-booking', (req, res) => {
         })
 })
 
+// confirm a new booking (send out email)
+app.get('/confirm/:booking_id/', (req, res) => {
+    const { bookingId } = req.params.booking_id;
+    Booking.find( {bookingId: bookingId})
+        .then(booking => {
+            console.log('OBM booking:', booking);
+            const mailToUserOptions = {
+                from: 'guestroombooker@gmail.com',
+                to: booking.guestEmail,
+                subject: 'Confirming Your Stay with Oliver and Chris',
+                text: `Hey ${booking.guestName}!\n\nGreat news!!! You are booked to stay with us from ${formattedSd} to ${formattedEd}! We look forward to seeing you!\n\nBest wishes,\nOliver and Chris`
+            };
+
+            transporter.sendMail(mailToUserOptions, function (error, info) {
+                if (error) {
+                    console.error('(OBM) ERROR SENDING MAIL' + error);
+                } else {
+                    console.log('(OBM) EMAIL SENT: ' + info.response);
+                }
+            })
+        })
+        .catch(error => {
+            console.log(error);
+        })
+})
+
+// deny a new booking (send out email and delete from server)
+app.delete('/deny/:booking_id/', (req, res) => {
+    const { bookingId } = req.params.booking_id;
+    Booking.findByIdAndDelete({ bookingId: bookingId })
+        .then(booking => {
+            console.log('OBM booking:', booking);
+            const mailToUserOptions = {
+                from: 'guestroombooker@gmail.com',
+                to: booking.guestEmail,
+                subject: 'Regarding Your Stay with Oliver and Chris',
+                html: `Hey ${booking.guestName}!\n\nSorry to bring you bad news, but unfortunately Oliver and Chris are not free for your visit on ${formattedSd} to ${formattedEd}. Please make a request for other dates here: <a> </a>\n\nBest wishes,\nOliver and Chris`
+            };
+
+            transporter.sendMail(mailToUserOptions, function (error, info) {
+                if (error) {
+                    console.error('(OBM) ERROR SENDING MAIL' + error);
+                } else {
+                    console.log('(OBM) EMAIL SENT: ' + info.response);
+                }
+            })
+        })
+        .catch(error => {
+            console.log(error);
+        })
+})
+
 app.post('/contact-us', (req, res) => {
     console.log('OLIVER contact us tests', {req, body: req.body, res});
     const contactReq = new ContactReq({
@@ -127,6 +198,15 @@ app.post('/contact-us', (req, res) => {
         recipientName: req.body.recipientName,
         recipientEmails: req.body.recipientEmails,
     });
+
+    // save the contact request
+    contactReq.save()
+        .then((result) => {
+            res.send(result);
+            console.log('new contact request saved')
+        }).catch((error) => {
+            console.error((error))
+        })
     
     const mailOptions = {
         from: 'guestroombooker@gmail.com',
