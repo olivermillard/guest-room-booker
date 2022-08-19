@@ -96,7 +96,11 @@ const DatePicker = () => {
         const areDatesValid = checkDatesAreValid();
         const emailCheck = emailIsValid(emailAddress);
         // check if there is an invalid entry
-        if(!areDatesValid || !guestName || !emailCheck) {
+        if(!areDatesValid || !guestName || emailCheck) {
+            console.log({
+                datesCheck: !areDatesValid,
+                guestNameCheck: !guestName,
+                emailCheck: !emailCheck});
             // check if dates are invalid
             if(!areDatesValid) {
                 setShowDatesError(true);
@@ -130,7 +134,7 @@ const DatePicker = () => {
         };
 
         setIsSubmitting(true);
-
+        console.log('here');
         fetch(`${BACKEND_URL}/bookings`, { // ./bookings
             method: 'POST',
             body: JSON.stringify(postData),

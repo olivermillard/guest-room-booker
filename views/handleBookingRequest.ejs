@@ -1,0 +1,124 @@
+<html lang="en">
+<%- include('./partials/head.ejs') %>
+<body>
+    <div class="mainWrapper">
+        <% if(booking) { %>
+        <div 
+            class="mainContent" 
+            id="mainContent_bookingRequest"
+            data-id="<%=booking._id%>"
+            data-name="<%=booking.guestName%>"
+            data-email="<%=booking.guestEmail%>"
+            data-sd="<%=booking.startDate%>"
+            data-ed="<%=booking.endDate%>"
+        >
+            <p class="guestName">
+                <%=booking.guestName%> wants to visit!
+            </p>
+            <div class="visitDates">
+                <div class="visitDateContainer">
+                    <p class="visitDateLabel">
+                        From:
+                    </p>
+                    <p 
+                        class="visitDate" 
+                        id="visitDate_startDate"
+                    ></p>
+                </div>
+                <div class="visitDateContainer">
+                    <p class="visitDateLabel visitDateText">
+                        To:
+                    </p>
+                    <p 
+                        class="visitDate" 
+                        id="visitDate_endDate"
+                    ></p>
+                </div>
+            </div>
+            <div class="confirmOrDeny">
+                <a 
+                    class="confirmButton responseButton" 
+
+                >
+                    CONFIRM
+                </a>
+                <a 
+                    class="denyButton responseButton" 
+                >
+                    DENY
+                </a>
+            </div>
+        </div>
+        <% } else { %>
+            <div 
+                class="mainContent" 
+                id="mainContent_bookingRequest"
+            >
+                <p className="badQueryRes">
+                    No Request Found with this ID
+                </p>
+            </div>
+        <% } %>
+    </div>
+</body>
+<script>
+    const BACKEND_URL = 'https://guest-room-booker.herokuapp.com';
+    
+    const data = document.querySelector('div#mainContent_bookingRequest').dataset;
+    const name = data.name;
+    const email = data.email;
+
+    // Setting date correctly 
+    const tz = 'Europe/London'
+    const dateFormatOptions = { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric', timeZone: tz };
+    const startDate = data.sd;
+    const endDate = data.ed;
+    
+    const startDateString = new Date(startDate).toLocaleString('en-US', dateFormatOptions);
+    const endDateString = new Date(endDate).toLocaleString('en-US', dateFormatOptions);
+    
+    document.getElementById('visitDate_startDate').innerHTML = (`${startDateString}`);
+    document.getElementById('visitDate_endDate').innerHTML = (`${endDateString}`);
+
+    const confirmButton = document.querySelector('a.confirmButton');
+    confirmButton.addEventListener('click', (e) => {
+        const endpoint = `/booking-request/${data.id}`;
+        fetch(endpoint, {
+            method: 'POST'
+        })
+
+        document.getElementById("mainContent_bookingRequest").innerHTML = (
+            `<div class='respondedToRequest'>
+                <p class='responseText responseTextLg'>
+                    <b>${name}'s</b> visit is confirmed!
+                </p>
+                <p class='responseText responseTextLg'> 
+                    <b>${startDateString}</b> - <b>${endDateString}</b>
+                </p>
+                <p class='responseText responseTextSm'>
+                    We have sent ${name} a confirmation email.
+                </p>
+            </div>`
+        )
+    }) 
+    
+    const denyButton = document.querySelector('a.denyButton');
+    denyButton.addEventListener('click', async (e) => {
+        const endpoint = `/booking-request/${data.id}`;
+        fetch(endpoint, {
+            method: 'DELETE'
+        })
+
+        document.getElementById("mainContent_bookingRequest").innerHTML = (
+            `<div class='respondedToRequest'>
+                <p class='responseText responseTextLg'>
+                    You have denied <b>${name}'s</b> visit request :(
+                </p>
+                <p class='responseText responseTextLg'> 
+                    Email them <a href="mailto:${email}">here</a> to explain why
+                </p>
+            </div>`
+        )
+    }) 
+</script>
+</html>
