@@ -134,8 +134,7 @@ const DatePicker = () => {
         };
 
         setIsSubmitting(true);
-        console.log('here');
-        fetch(`${BACKEND_URL}/bookings`, { // ./bookings
+        fetch(`${BACKEND_URL}/bookingsReq`, { // ./bookings
             method: 'POST',
             body: JSON.stringify(postData),
             headers: {

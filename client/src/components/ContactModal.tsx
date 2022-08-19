@@ -3,7 +3,7 @@ import { Button, Modal, FormControl, Input, Center, TextArea, WarningOutlineIcon
 import { useState } from 'react';
 import { ContactName } from './ContactFab';
 import { handleTextChange, emailIsValid } from '../utils/text';
-import { BACKEND_URL } from '../config';
+import { BACKEND_URL, CHRIS_EMAIL, OLIVER_EMAIL } from '../config';
 
 interface ContactModalProps {
     recipient: ContactName;
@@ -55,18 +55,17 @@ const ContactModal = (props: ContactModalProps) => {
                 setShowMessageError(false);
             }
 
-            const oliverEmail = 'olivermillard@gmail.com';
-            const chrisEmail = 'chris961125@gmail.com';
+
 
             let recipientEmails = [];
             if (props.recipient === 'Oliver') {
-                recipientEmails = [ oliverEmail ];
+                recipientEmails = [ OLIVER_EMAIL ];
             }
             else if (props.recipient === 'Chris') {
-                recipientEmails = [ chrisEmail ];
+                recipientEmails = [ CHRIS_EMAIL ];
             }
             else {
-                recipientEmails = [ oliverEmail, chrisEmail ];
+                recipientEmails = [ OLIVER_EMAIL, CHRIS_EMAIL ];
             }
 
             const postData = {
