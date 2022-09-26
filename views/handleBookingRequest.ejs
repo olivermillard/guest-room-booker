@@ -3,53 +3,51 @@
 <body>
     <div class="mainWrapper">
         <% if(booking) { %>
-        <div 
-            class="mainContent" 
-            id="mainContent_bookingRequest"
-            data-id="<%=booking._id%>"
-            data-name="<%=booking.guestName%>"
-            data-email="<%=booking.guestEmail%>"
-            data-sd="<%=booking.startDate%>"
-            data-ed="<%=booking.endDate%>"
-        >
-            <p class="guestName">
-                <%=booking.guestName%> wants to visit!
-            </p>
-            <div class="visitDates">
-                <div class="visitDateContainer">
-                    <p class="visitDateLabel">
-                        From:
-                    </p>
-                    <p 
-                        class="visitDate" 
-                        id="visitDate_startDate"
-                    ></p>
+            <div 
+                class="mainContent" 
+                id="mainContent_bookingRequest"
+                data-id="<%=booking._id%>"
+                data-name="<%=booking.guestName%>"
+                data-email="<%=booking.guestEmail%>"
+                data-sd="<%=booking.startDate%>"
+                data-ed="<%=booking.endDate%>"
+                data-response="<%=booking.response%>"
+                data-reqs="<%=otherReq%>"
+            >
+                <p class="guestName">
+                    <%=booking.guestName%> wants to visit!
+                </p>
+                <div class="visitDates">
+                    <div class="visitDateContainer">
+                        <p class="visitDateLabel">
+                            From:
+                        </p>
+                        <p 
+                            class="visitDate" 
+                            id="visitDate_startDate"
+                        ></p>
+                    </div>
+                    <div class="visitDateContainer">
+                        <p class="visitDateLabel visitDateText">
+                            To:
+                        </p>
+                        <p 
+                            class="visitDate" 
+                            id="visitDate_endDate"
+                        ></p>
+                    </div>
                 </div>
-                <div class="visitDateContainer">
-                    <p class="visitDateLabel visitDateText">
-                        To:
-                    </p>
-                    <p 
-                        class="visitDate" 
-                        id="visitDate_endDate"
-                    ></p>
+                <div class="confirmOrDeny">
+                    <a class="confirmButton responseButton">
+                        CONFIRM
+                    </a>
+                    <a class="denyButton responseButton">
+                        DENY
+                    </a>
                 </div>
             </div>
-            <div class="confirmOrDeny">
-                <a 
-                    class="confirmButton responseButton" 
-
-                >
-                    CONFIRM
-                </a>
-                <a 
-                    class="denyButton responseButton" 
-                >
-                    DENY
-                </a>
-            </div>
-        </div>
-        <% } else { %>
+        <% } 
+        else { %>
             <div 
                 class="mainContent" 
                 id="mainContent_bookingRequest"
@@ -59,66 +57,217 @@
                 </p>
             </div>
         <% } %>
+        <div id="or_container" c></div>
     </div>
 </body>
+
 <script>
     const BACKEND_URL = 'https://guest-room-booker.herokuapp.com';
     
     const data = document.querySelector('div#mainContent_bookingRequest').dataset;
     const name = data.name;
     const email = data.email;
+    const response = data.response;
+    // reverse the otherReq so that they are in order
+    const otherReq = JSON.parse(data.reqs).reverse();
+    console.log(otherReq);
 
     // Setting date correctly 
     const tz = 'Europe/London'
-    const dateFormatOptions = { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric', timeZone: tz };
+    const longDateFormat = { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric', timeZone: tz };
+    const shortDateFormat = { dateStyle: 'short', timeZone: tz };
     const startDate = data.sd;
     const endDate = data.ed;
-    
-    const startDateString = new Date(startDate).toLocaleString('en-US', dateFormatOptions);
-    const endDateString = new Date(endDate).toLocaleString('en-US', dateFormatOptions);
+    const startDateString = new Date(startDate).toLocaleString('en-US', longDateFormat);
+    const endDateString = new Date(endDate).toLocaleString('en-US', longDateFormat);
     
     document.getElementById('visitDate_startDate').innerHTML = (`${startDateString}`);
     document.getElementById('visitDate_endDate').innerHTML = (`${endDateString}`);
 
-    const confirmButton = document.querySelector('a.confirmButton');
-    confirmButton.addEventListener('click', (e) => {
-        const endpoint = `/booking-request/${data.id}`;
-        fetch(endpoint, {
-            method: 'POST'
-        })
+    const checkResonse = () => {
+        // since the piece of data is coming from the query selector, it will be either "true", "false", or ""
+        // "" means that there has been no response 
+        if(response !== "") { 
+            console.log('res', response, data)
+            if(response === "true") {
+                document.getElementById("mainContent_bookingRequest").innerHTML = (
+                    `<div class='respondedToRequest'>
+                        <p class='responseText responseTextLg'>
+                            <b>${name}'s</b> visit is confirmed!
+                        </p>
+                        <p class='responseText responseTextLg'> 
+                            <b>${startDateString}</b> - <b>${endDateString}</b>
+                        </p>
+                        <p class='responseText responseTextSm'>
+                            We have sent ${name} a confirmation email.
+                        </p>
+                    </div>`
+                )
+            }
+            else {
+                document.getElementById("mainContent_bookingRequest").innerHTML = (
+                    `<div class='respondedToRequest'>
+                        <p class='responseText responseTextLg'>
+                            You have denied <b>${name}'s</b> visit request :(
+                        </p>
+                        <p class='responseText responseTextLg'> 
+                            Email them <a href="mailto:${email}">here</a> to explain why
+                        </p>
+                    </div>`
+                ) 
+            }
+        }
+        // only attach listeners to buttons if you there is no response yet
+        else {
+            const confirmButton = document.querySelector('a.confirmButton');
+            confirmButton.addEventListener('click', (e) => {
+                const endpoint = `/booking-request/${data.id}`;
+                fetch(endpoint, {
+                    method: 'POST'
+                })
 
-        document.getElementById("mainContent_bookingRequest").innerHTML = (
-            `<div class='respondedToRequest'>
-                <p class='responseText responseTextLg'>
-                    <b>${name}'s</b> visit is confirmed!
-                </p>
-                <p class='responseText responseTextLg'> 
-                    <b>${startDateString}</b> - <b>${endDateString}</b>
-                </p>
-                <p class='responseText responseTextSm'>
-                    We have sent ${name} a confirmation email.
-                </p>
-            </div>`
-        )
-    }) 
+                document.getElementById("mainContent_bookingRequest").innerHTML = (
+                    `<div class='respondedToRequest'>
+                        <p class='responseText responseTextLg'>
+                            <b>${name}'s</b> visit is confirmed!
+                        </p>
+                        <p class='responseText responseTextLg'> 
+                            <b>${startDateString}</b> - <b>${endDateString}</b>
+                        </p>
+                        <p class='responseText responseTextSm'>
+                            We have sent ${name} a confirmation email.
+                        </p>
+                    </div>`
+                )
+            })
+
+            const denyButton = document.querySelector('a.denyButton');
+            denyButton.addEventListener('click', async (e) => {
+                const endpoint = `/booking-request/${data.id}`;
+                fetch(endpoint, {
+                    method: 'DELETE'
+                });
+
+                document.getElementById("mainContent_bookingRequest").innerHTML = (
+                    `<div class='respondedToRequest'>
+                        <p class='responseText responseTextLg'>
+                            You have denied <b>${name}'s</b> visit request :(
+                        </p>
+                        <p class='responseText responseTextLg'> 
+                            Email them <a href="mailto:${email}">here</a> to explain why
+                        </p>
+                    </div>`
+                )
+            }) 
+        }
+    }
+    checkResonse();
+
+    const otherRequests = document.getElementById('or_container');
+    const setupOtherReq = () => {
+        let html = "";
+        otherReq.forEach((req, index) => {
+            const req_name = req.guestName;
+            const req_resp = req.response;
+            const req_id = req._id;
+            const req_sd = new Date(req.startDate).toLocaleString('en-US', shortDateFormat);
+            const req_ed = new Date(req.endDate).toLocaleString('en-US', shortDateFormat);
+           
+            let rightSideContent = ""
+
+            if(req_resp === undefined){
+                rightSideContent = (
+                    `<div class='or_confirm${index} or_buttonContainer or_responseItem'>
+                        <a class="or_buttonText or_confirmText">
+                            CONFIRM
+                        </a>
+                    </div>
+                    <div class='or_deny${index} or_buttonContainer or_responseItem'>
+                        <a class="or_buttonText or_denyText">
+                            DENY
+                        </a>
+                    </div>`
+                );
+            }
+            else {
+                const isConfirmed = (req_resp === 'true' || req_resp === true) ? true : false;
+                const responseText = isConfirmed ? "CONFIRMED" : "DENIED";
+                const responseClass = isConfirmed ? "or_respConfirmed" : "or_respDenied"
+                
+                let upcomingOrPastText = "";
+                if(isConfirmed) {
+                    const isUpcoming = new Date(req_sd) > new Date() ? true : false;
+                    const upcomingText = isUpcoming ? "UPCOMING" : "PAST";
+                    const upcomingClass = isUpcoming ? "or_upcoming" : "or_past";
+
+                     upcomingOrPastText = !isConfirmed ? "" : (
+                        `<div class="or_buttonText ${upcomingClass}">
+                            ${upcomingText}
+                        </div>`
+                    );
+                }
+            
+                rightSideContent = (
+                     `<div class='or_responseItem ${responseClass}'>
+                        <div class="or_buttonText">
+                            ${responseText}
+                        </div>
+                    </div>
+                    ${upcomingOrPastText}`  
+                )
+            }
+
+            const card = (`
+                <div class='or_item' onclick="location.href='https://guest-room-booker.herokuapp.com/booking-request/${req_id}';")>
+                    <div class='or_info'>
+                        <div class='or_name'>
+                            ${req_name}
+                        </div>
+                        <div class='or_dates'>
+                            ${req_sd} - ${req_ed}
+                        </div>
+                    </div>
+                    <div class='or_response'>
+                        ${rightSideContent}
+                    </div>
+                </div>
+            `);
+
+            html += card
+        })
+        
+        otherRequests.innerHTML = html;
+
+        otherReq.forEach((req, index) => {
+            const req_name = req.guestName;
+            const req_id = req._id;
+            const req_resp = req.response;
+            const req_sd = new Date(req.startDate).toLocaleString('en-US', shortDateFormat);
+            const req_ed = new Date(req.endDate).toLocaleString('en-US', shortDateFormat);
+            
+            // only set the onclick event on the buttons if there is no response
+            console.log(typeof req_resp, req_resp)
+            if(req_resp === undefined) {
+                const or_confirmButton = document.querySelector(`div.or_confirm${index}`);
+                or_confirmButton.addEventListener('click', (e) => {
+                const endpoint = `/booking-request/${req_id}`;
+                    fetch(endpoint, {
+                        method: 'POST'
+                    })
+                });
+
+                const or_denyButton = document.querySelector(`div.or_deny${index}`);
+                or_denyButton.addEventListener('click', async (e) => {
+                    const endpoint = `/booking-request/${req_id}`;
+                    fetch(endpoint, {
+                        method: 'DELETE'
+                    });
+                });
+            }
+        }) 
+    }
     
-    const denyButton = document.querySelector('a.denyButton');
-    denyButton.addEventListener('click', async (e) => {
-        const endpoint = `/booking-request/${data.id}`;
-        fetch(endpoint, {
-            method: 'DELETE'
-        })
+    setupOtherReq();
 
-        document.getElementById("mainContent_bookingRequest").innerHTML = (
-            `<div class='respondedToRequest'>
-                <p class='responseText responseTextLg'>
-                    You have denied <b>${name}'s</b> visit request :(
-                </p>
-                <p class='responseText responseTextLg'> 
-                    Email them <a href="mailto:${email}">here</a> to explain why
-                </p>
-            </div>`
-        )
-    }) 
 </script>
 </html>

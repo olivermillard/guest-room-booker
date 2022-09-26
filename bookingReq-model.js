@@ -19,6 +19,9 @@ const bookingReqSchema = new Schema({
     endDate: { 
         type: Date, 
         required: true 
+    },
+    response: {
+        type: Boolean
     }
 }, { timestamps: true })
 

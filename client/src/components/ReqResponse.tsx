@@ -61,6 +61,7 @@ const ReqResponse = () => {
     return (
         <Center
             minH='100vh'
+            w='95vw'
         >
             <Center
                 h='50%'
@@ -70,6 +71,7 @@ const ReqResponse = () => {
                     alignItems='center'
                     w='100%'
                     space={3}
+                    p='10px'
                 >
                     {img}
                     <Text

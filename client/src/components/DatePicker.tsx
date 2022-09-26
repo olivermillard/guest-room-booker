@@ -142,7 +142,6 @@ const DatePicker = () => {
             }
         }).then(response => {
             console.log('(OBM) response:', response.json());
-            // attemptedBooking = false;
             navigate('/reqResponse', { state: {succReq: true }});
         }).catch(error => {
             console.error(error);
