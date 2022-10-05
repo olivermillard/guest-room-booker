@@ -69,12 +69,17 @@ const DatePicker = () => {
     useEffect(() => {
         fetch(`${BACKEND_URL}/bookings`).then(
             response => response.json()
-        ).then(
-            data => {
-                setBackendData(data);
-                setDataLoaded(true);
-            }
-        );
+        )
+            .then(
+                data => {
+                    setBackendData(data);
+                    setDataLoaded(true);
+                }
+            )
+            .catch((error) => {
+                console.error(error);
+                console.info('error');
+            });
     }, []);
 
     const handleDateChange = (item: RangeKeyDict) => {

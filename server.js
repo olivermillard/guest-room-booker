@@ -165,123 +165,173 @@ app.post('/bookingsReq', (req, res) => {
     })
 })
 
-// go to booking request view
+app.get('/', (req, res) => {
+    BookingReq.find().then((result) => {
+        const pendingReqs = result.filter(request => request.response === null);
+        const answeredReqs = result.filter(request => request.response === false || request.response === true);
+
+        res.render('home', { 
+            title: 'Home',
+            pendingReqs: JSON.stringify(pendingReqs),
+            answeredReqs: JSON.stringify(answeredReqs),
+        })
+    })
+})
+
+// go to specific booking request view
 app.get('/booking-request/:bookingId', (req, res) => {
     const bookingId = req.params.bookingId;
-    let otherReq = [];
     
     // get all bookings 
-    BookingReq.find()
-        .then((result) => {
-            // filter out this booking (just have the remaining ones)
-            // otherReq = result.filter(entry => entry.id !== bookingId);
-            otherReq = result;
+    BookingReq.find().then((result) => {
+        // if the booking is found, show the page
+        if(result.includes(entry => entry.id === bookindId)) {
+            console.log('hi')
             // render the specific booking id's confirm/deny 
-            BookingReq.findById(bookingId)
-                .then(booking => {
-                    if(booking){
-                        res.render('handleBookingRequest', {
-                            booking: booking,
-                            title: `${booking.guestName}'s Booking Request`,
-                            otherReq: JSON.stringify(otherReq),
-                        })
-                    }
-                    else {
-                        res.render('404') // TODO: redirect to different page
-                    }
-                }) 
-        })
-        .catch((error) => {
-            console.error(error);
-        });
+            BookingReq.findById(bookingId).then(booking => {
+                if (booking) {
+                    res.render('handleBookingRequest', {
+                        booking: booking,
+                        title: `${booking.guestName}'s Booking Request`,
+                        otherReq: JSON.stringify(result),
+                    })
+                }
+            }) 
+        }
+        else {
+            const pendingReqs = result.filter(request => request.response === null);
+            const answeredReqs = result.filter(request => request.response === false || request.response === true);
+
+
+            res.render('home', {
+                title: 'Home',
+                pendingReqs: JSON.stringify(pendingReqs),
+                answeredReqs: JSON.stringify(answeredReqs),
+            })
+        }
+    })
+    .catch((error) => {
+        console.error(error);
+    });
 })
 
-// confirm a new booking (send out email)
-app.post('/booking-request/:bookingId', (req, res) => {
+// handle booking request response; confirm or deny
+app.post('/booking-request/:bookingId/:response', (req, res) => {
     const bookingId = req.params.bookingId;
+    const response = req.params.response;
+    const isConfirm = response === 'true' ? true : false;
+
     // Update verdict on this booking request
     const filter = { _id: bookingId };
-    const update = { response: true };
-    BookingReq.findOneAndUpdate(filter, update)
-        .then(result => {
-            console.log('updated: ', result);
-            // Save booking to Booking DB and send out confirmation email
-            BookingReq.findById(bookingId)
-                .then(booking => {
-                    const datesString = getDatesString(booking.startDate, booking.endDate);
-                    const mailToUserOptions = {
-                        from: 'guestroombooker@gmail.com',
-                        to: booking.guestEmail,
-                        subject: 'Confirming Your Stay with Oliver and Chris',
-                        text: `Hey ${booking.guestName}!\n\nGreat news!!! You are booked to stay with us ${datesString}! We look forward to seeing you!\n\nBest wishes,\nOliver and Chris`
-                    };
-
-                    const bookingToSave = new Booking({
-                        guestName: booking.guestName,
-                        guestEmail: booking.guestEmail,
-                        startDate: booking.startDate,
-                        endDate: booking.endDate,
-                    });
-
-                    bookingToSave.save()
-                        .then((result) => {
-                            res.send(result);
-                            console.log('saved new booking')
-                        }).catch((error) => {
-                            console.error((error))
-                        })
-
-                    transporter.sendMail(mailToUserOptions, function (error, info) {
-                        if (error) {
-                            console.error('ERROR SENDING CONFIRMATION' + error);
-                        } else {
-                            console.log('(OBM) EMAIL SENT: ' + info.response);
-                        }
-                    })
-                })
-                .catch(error => {
-                    console.log(error);
-                })
-        })    
+    const update = { response: isConfirm};
+    BookingReq.findOneAndUpdate(filter, update).then(() => {
+        if(isConfirm) {
+            confirmBooking(bookingId);
+        }
+        else {
+            denyBooking(bookingId);
+        }
+    })
 })
+
+// confirm a new booking based off of the 
+const confirmBooking = (bookingId) => {
+    // Save booking to Booking DB and send out confirmation email
+    BookingReq.findById(bookingId).then(booking => {
+        const datesString = getDatesString(booking.startDate, booking.endDate);
+        const mailToUserOptions = {
+            from: 'guestroombooker@gmail.com',
+            to: booking.guestEmail,
+            subject: 'Confirming Your Stay with Oliver and Chris',
+            text: `Hey ${booking.guestName}!\n\nGreat news!!! You are booked to stay with us ${datesString}! We look forward to seeing you!\n\nBest wishes,\nOliver and Chris`
+        };
+
+        const bookingToSave = new Booking({
+            guestName: booking.guestName,
+            guestEmail: booking.guestEmail,
+            startDate: booking.startDate,
+            endDate: booking.endDate,
+        });
+
+        bookingToSave.save()
+            .then((result) => {
+                res.send(result);
+                console.log('saved new booking')
+            }).catch((error) => {
+                console.error((error))
+            })
+
+        transporter.sendMail(mailToUserOptions, function (error, info) {
+            if (error) {
+                console.error('ERROR SENDING CONFIRMATION' + error);
+            } else {
+                console.log('(OBM) EMAIL SENT: ' + info.response);
+            }
+        })
+    })
+    .catch(error => {
+        console.log(error);
+    })
+} 
+
+// deny a booking request and send out denial email
+const denyBooking = (bookingId) => {
+    BookingReq.findById(bookingId).then(booking => {
+        const datesString = getDatesString(booking.startDate, booking.endDate);
+        const mailToUserOptions = {
+            from: 'guestroombooker@gmail.com',
+            to: booking.guestEmail,
+            subject: 'Regarding Your Stay with Oliver and Chris',
+            html: `Hey ${booking.guestName}!\n\nSorry to bring you bad news, but unfortunately the dates you requested for your visit ${datesString} don't work for us. Please make a request for other dates here: <a>https://guestroombooker.com/</a>\n\nBest wishes,\nOliver and Chris`
+        };
+
+        transporter.sendMail(mailToUserOptions, function (error, info) {
+            if (error) {
+                console.error('(OBM) ERROR SENDING MAIL' + error);
+            } else {
+                console.log('(OBM) EMAIL SENT: ' + info.response);
+            }
+        })
+    })
+}
 
 // deny a new booking (send out email and delete from server)
-app.delete('/booking-request/:bookingId', (req, res) => {
-    const bookingId = req.params.bookingId;
-    console.log('BOOKING ID AT DELETE');
-    BookingReq.findByIdAndDelete(bookingId)
-        .then(booking => {
-            const datesString = getDatesString(booking.startDate, booking.endDate);
-            const mailToUserOptions = {
-                from: 'guestroombooker@gmail.com',
-                to: booking.guestEmail,
-                subject: 'Regarding Your Stay with Oliver and Chris',
-                html: `Hey ${booking.guestName}!\n\nSorry to bring you bad news, but unfortunately the dates you requested for your visit ${datesString} don't work for us. Please make a request for other dates here: <a>https://guestroombooker.com/</a>\n\nBest wishes,\nOliver and Chris`
-            };
+// app.delete('/booking-request/:bookingId', (req, res) => {
+//     const bookingId = req.params.bookingId;
+//     console.log('BOOKING ID AT DELETE');
+//     BookingReq.findByIdAndDelete(bookingId)
+//         .then(booking => {
+//             const datesString = getDatesString(booking.startDate, booking.endDate);
+//             const mailToUserOptions = {
+//                 from: 'guestroombooker@gmail.com',
+//                 to: booking.guestEmail,
+//                 subject: 'Regarding Your Stay with Oliver and Chris',
+//                 html: `Hey ${booking.guestName}!\n\nSorry to bring you bad news, but unfortunately the dates you requested for your visit ${datesString} don't work for us. Please make a request for other dates here: <a>https://guestroombooker.com/</a>\n\nBest wishes,\nOliver and Chris`
+//             };
 
-            transporter.sendMail(mailToUserOptions, function (error, info) {
-                if (error) {
-                    console.error('(OBM) ERROR SENDING MAIL' + error);
-                } else {
-                    console.log('(OBM) EMAIL SENT: ' + info.response);
-                }
-            })
-        })
-        .catch(error => {
-            console.log(error);
-        })
-})
+//             transporter.sendMail(mailToUserOptions, function (error, info) {
+//                 if (error) {
+//                     console.error('(OBM) ERROR SENDING MAIL' + error);
+//                 } else {
+//                     console.log('(OBM) EMAIL SENT: ' + info.response);
+//                 }
+//             })
+//         })
+//         .catch(error => {
+//             console.log(error);
+//         })
+// })
 
-app.get('/find-booking', (req, res) => {
-    Booking.findById(res.body.booking)
-        .then((result) => {
-            res.send(result);
-            console.log('Found the booking')
-        })
-        .catch((error) => {
-            console.error(error)
-        })
-})
+// app.get('/find-booking', (req, res) => {
+//     Booking.findById(res.body.booking)
+//         .then((result) => {
+//             res.send(result);
+//             console.log('Found the booking')
+//         })
+//         .catch((error) => {
+//             console.error(error)
+//         })
+// })
 
 // contact us 
 app.post('/contact-us', (req, res) => {

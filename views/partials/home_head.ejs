@@ -1,0 +1,171 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>
+        <%=title%>
+    </title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+        body {
+            background-color: white;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+        }
+
+        .mainWrapper {
+            height: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .mainContent {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        @media only screen and (max-width: 750px) {
+            .mainContent {
+                flex-direction: column;
+            }
+
+            .section_container {
+                height: 48%;
+                flex-direction: row;
+            }
+
+            .reqs_container {
+                width: 95%;
+            }
+        }
+
+        .section_container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .section_header {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .reqs_container {
+            justify-content: center;
+            gap: 5px;
+            width: 325px;
+            height: 500px;
+            overflow: scroll;
+            border: 2px solid black;
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .req_item {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            height: 80px;
+            padding-left: 10px;
+            padding-right: 0px; 
+            padding-top: 5px; 
+            padding-bottom: 5px;        
+            background: #FFFFFF;
+            border: 2px solid #000000;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+
+        .req_item:hover {
+            box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+        }
+
+        .req_info {
+            padding-right: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 100%;
+            height: 75px;
+        }
+
+        .req_name {   
+            font-style: normal;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        
+        .req_dates {
+            font-style: normal;
+            font-weight: 400;
+            font-size: 14px;
+        }
+
+        .req_response {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .req_respItem {
+            width: 105px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border-radius: 5px;
+            margin: 5px;
+            cursor: default; 
+        }
+
+        .req_buttonText {
+            font-weight: 700;
+        }
+
+        .req_confirmed {
+            border: 2px solid #37e607;
+            color: #37e607;
+        }
+
+        .req_denied {
+            border: 2px solid red;
+            color: red;
+        }
+
+        .req_button {
+            cursor: pointer;
+            border: 2px solid black;
+        }
+
+        .req_button:hover {
+            background: #dfdfdf;
+        }
+
+        .req_denyText {
+            color: red
+        }
+
+        .req_result {
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        .req_upcoming {
+            background-color: yellow;  
+        }
+
+        .req_past {
+            background-color: lightgray;
+        }
+
+    </style>
+</head>

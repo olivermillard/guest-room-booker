@@ -1,0 +1,164 @@
+<html lang="en">
+<%- include('./partials/home_head.ejs') %>
+
+    <body>
+        <div class='mainWrapper'>
+            <div 
+                class="mainContent" 
+                id="mainContent_home" 
+                data-pending="<%=pendingReqs%>"
+                data-answered="<%=answeredReqs%>"
+            > 
+                <div class="section_container">
+                    <div class="section_header">
+                        Pending
+                    </div>
+                    <div id="pending_container" class="reqs_container"></div>
+                </div>
+                <div class="section_container">
+                    <div class="section_header">
+                        Answered
+                    </div>
+                    <div id="answered_container" class="reqs_container"></div>
+            </div>
+        </div>
+    </body>
+
+    <script>
+        const BACKEND_URL = 'https://guest-room-booker.herokuapp.com';
+
+        const data = document.querySelector('div#mainContent_home').dataset;
+        const pendingReqs = JSON.parse(data.pending).reverse();
+        const answeredReqs = JSON.parse(data.answered).reverse();
+       
+        // Setting date correctly 
+        const tz = 'Europe/London'
+        const longDateFormat = { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric', timeZone: tz };
+        const shortDateFormat = { dateStyle: 'short', timeZone: tz };
+
+        const pendingRequests = document.getElementById('pending_container');
+        const populatePending = () => {
+            let html = "";
+
+            pendingReqs.forEach((req, index) => {
+                const req_name = req.guestName;
+                const req_resp = req.response;
+                const req_id = req._id;
+                const req_sd = new Date(req.startDate).toLocaleString('en-US', shortDateFormat);
+                const req_ed = new Date(req.endDate).toLocaleString('en-US', shortDateFormat);
+
+                const rightSideContent = (
+                    `<div id='pending_confirm${index}' class='req_respItem req_button'>
+                        <a class="req_buttonText req_confirmText" onclick="confirmOrDeny({isConfirm: true, id: '${req_id}', guestName: '${req_name}'})">
+                            CONFIRM
+                        </a>
+                    </div>
+                    <div id='pending_deny${index}' class='req_respItem req_button'>
+                        <a class="req_buttonText req_denyText" onclick="confirmOrDeny({isConfirm: false, id: '${req_id}', guestName: '${req_name}'})">
+                            DENY
+                        </a>
+                    </div>`
+                );
+                    // otherRequests.innerHTML = html; // <- nav 
+                const card = (`
+                    <div class='req_item')> 
+                        <div class='req_info'>
+                            <div class='req_name'>
+                                ${req_name}
+                            </div>
+                            <div class='req_dates'>
+                                ${req_sd} - ${req_ed}
+                            </div>
+                        </div>
+                        <div class='req_response'>
+                            ${rightSideContent}
+                        </div>
+                    </div>
+                `);
+
+                html += card
+            })
+
+            pendingRequests.innerHTML = html;
+        }
+        populatePending();
+        
+        const answeredRequests = document.getElementById('answered_container');
+        const populateAnswered = () => {
+             let html = "";
+
+            answeredReqs.forEach((req, index) => {
+                const req_name = req.guestName;
+                const req_resp = req.response;
+                const req_id = req._id;
+                const req_sd = new Date(req.startDate).toLocaleString('en-US', shortDateFormat);
+                const req_ed = new Date(req.endDate).toLocaleString('en-US', shortDateFormat);
+
+                const isConfirmed = (req_resp === 'true' || req_resp === true) ? true : false;
+                const responseText = isConfirmed ? "CONFIRMED" : "DENIED";
+                const responseClass = isConfirmed ? "req_confirmed" : "req_denied"
+
+                let upcomingOrPastText = "";
+                if (isConfirmed) {
+                    const isUpcoming = new Date(req_sd) > new Date() ? true : false;
+                    const upcomingText = isUpcoming ? "UPCOMING" : "PAST";
+                    const upcomingClass = isUpcoming ? "req_upcoming" : "req_past";
+
+                    upcomingOrPastText = !isConfirmed ? "" : (
+                        `<div class='req_respItem'>
+                            <div class="req_buttonText ${upcomingClass} req_result">
+                                ${upcomingText}
+                            </div>
+                        </div>`
+                    );
+                }
+
+                rightSideContent = (
+                    `<div class='req_respItem ${responseClass}'>
+                        ${responseText}
+                    </div>
+                    ${upcomingOrPastText}`
+                )
+
+                const card = (`
+                    <div class='req_item'> 
+                        <div class='req_info'>
+                            <div class='req_name'>
+                                ${req_name}
+                            </div>
+                            <div class='req_dates'>
+                                ${req_sd} - ${req_ed}
+                            </div>
+                        </div>
+                        <div class='req_response'>
+                            ${rightSideContent}
+                        </div>
+                    </div>
+                `);
+
+                html += card
+            })
+
+            answeredRequests.innerHTML = html;
+        }
+        populateAnswered();
+
+        function confirmOrDeny(props) {
+            console.log('in confirmOrDeny', props)
+            if(confirm(`You want to ${props.isConfirm ? 'confirm' : 'deny'} ${props.guestName}'s visit?`) === true) {
+                // do backend work
+                const endpoint = `/booking-request/${props.id}/${props.isConfirm}`;
+                fetch(endpoint, {
+                    method: 'post'
+                });
+
+                // update site
+                window.location.reload()
+            }  
+            else {
+                console.log('you are indecisive')
+            }
+        }
+
+    </script>
+</html>

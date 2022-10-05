@@ -6,7 +6,6 @@ import {
     useLocation
 } from 'react-router-dom';
 import { ReqResponse } from './components/ReqResponse';
-import { ContactForm } from './components/ContactForm';
 import { DatePicker } from './components/DatePicker';
 
 function App() {
@@ -19,7 +18,6 @@ function App() {
                 <Route path='/intro' element={<DatePicker />} />
                 <Route path='/' element={<DatePicker />} />
                 <Route path='/reqResponse' element={<ReqResponse/>} />
-                <Route path='/contact' element={<ContactForm/>} />
             </Routes>
         </>
     );

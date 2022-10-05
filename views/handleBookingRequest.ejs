@@ -1,5 +1,5 @@
 <html lang="en">
-<%- include('./partials/head.ejs') %>
+<%- include('./partials/handleReq_head.ejs') %>
 <body>
     <div class="mainWrapper">
         <% if(booking) { %>
@@ -66,11 +66,11 @@
     
     const data = document.querySelector('div#mainContent_bookingRequest').dataset;
     const name = data.name;
+    const guestId = data.id;
     const email = data.email;
     const response = data.response;
     // reverse the otherReq so that they are in order
     const otherReq = JSON.parse(data.reqs).reverse();
-    console.log(otherReq);
 
     // Setting date correctly 
     const tz = 'Europe/London'
@@ -88,7 +88,6 @@
         // since the piece of data is coming from the query selector, it will be either "true", "false", or ""
         // "" means that there has been no response 
         if(response !== "") { 
-            console.log('res', response, data)
             if(response === "true") {
                 document.getElementById("mainContent_bookingRequest").innerHTML = (
                     `<div class='respondedToRequest'>
@@ -104,7 +103,7 @@
                     </div>`
                 )
             }
-            else {
+            else if(response==='false') {
                 document.getElementById("mainContent_bookingRequest").innerHTML = (
                     `<div class='respondedToRequest'>
                         <p class='responseText responseTextLg'>
@@ -119,12 +118,10 @@
         }
         // only attach listeners to buttons if you there is no response yet
         else {
+
             const confirmButton = document.querySelector('a.confirmButton');
             confirmButton.addEventListener('click', (e) => {
-                const endpoint = `/booking-request/${data.id}`;
-                fetch(endpoint, {
-                    method: 'POST'
-                })
+               confirmOrDeny({ isConfirm: true, id: guestId, guestName: name })
 
                 document.getElementById("mainContent_bookingRequest").innerHTML = (
                     `<div class='respondedToRequest'>
@@ -143,10 +140,7 @@
 
             const denyButton = document.querySelector('a.denyButton');
             denyButton.addEventListener('click', async (e) => {
-                const endpoint = `/booking-request/${data.id}`;
-                fetch(endpoint, {
-                    method: 'DELETE'
-                });
+                confirmOrDeny({isConfirm: false, id: guestId, guestName: name});
 
                 document.getElementById("mainContent_bookingRequest").innerHTML = (
                     `<div class='respondedToRequest'>
@@ -158,14 +152,33 @@
                         </p>
                     </div>`
                 )
-            }) 
+            })
         }
     }
+
+    function confirmOrDeny(props) {
+            console.log('in confirmOrDeny', props)
+            if (confirm(`You want to ${props.isConfirm ? 'confirm' : 'deny'} ${props.guestName}'s visit?`) === true) {
+                // do backend work
+                const endpoint = `/booking-request/${props.id}/${props.isConfirm}`;
+                fetch(endpoint, {
+                    method: 'post'
+                });
+                
+                // update site
+                window.location.reload()
+            }
+            else {
+                console.log('you are indecisive')
+            }
+        }
+
     checkResonse();
 
     const otherRequests = document.getElementById('or_container');
     const setupOtherReq = () => {
         let html = "";
+        
         otherReq.forEach((req, index) => {
             const req_name = req.guestName;
             const req_resp = req.response;
@@ -173,17 +186,16 @@
             const req_sd = new Date(req.startDate).toLocaleString('en-US', shortDateFormat);
             const req_ed = new Date(req.endDate).toLocaleString('en-US', shortDateFormat);
            
-            let rightSideContent = ""
-
-            if(req_resp === undefined){
+            let rightSideContent = "";
+            if(req_resp === undefined || req_resp === null){
                 rightSideContent = (
                     `<div class='or_confirm${index} or_buttonContainer or_responseItem'>
-                        <a class="or_buttonText or_confirmText">
+                        <a class="or_buttonText or_confirmText onclick="confirmOrDeny({isConfirm: true, id: '${req_id}', guestName: '${req_name}'})">
                             CONFIRM
                         </a>
                     </div>
                     <div class='or_deny${index} or_buttonContainer or_responseItem'>
-                        <a class="or_buttonText or_denyText">
+                        <a class="or_buttonText or_denyText onclick="confirmOrDeny({isConfirm: true, id: '${req_id}', guestName: '${req_name}'})">
                             DENY
                         </a>
                     </div>`
@@ -236,35 +248,7 @@
             html += card
         })
         
-        otherRequests.innerHTML = html;
-
-        otherReq.forEach((req, index) => {
-            const req_name = req.guestName;
-            const req_id = req._id;
-            const req_resp = req.response;
-            const req_sd = new Date(req.startDate).toLocaleString('en-US', shortDateFormat);
-            const req_ed = new Date(req.endDate).toLocaleString('en-US', shortDateFormat);
-            
-            // only set the onclick event on the buttons if there is no response
-            console.log(typeof req_resp, req_resp)
-            if(req_resp === undefined) {
-                const or_confirmButton = document.querySelector(`div.or_confirm${index}`);
-                or_confirmButton.addEventListener('click', (e) => {
-                const endpoint = `/booking-request/${req_id}`;
-                    fetch(endpoint, {
-                        method: 'POST'
-                    })
-                });
-
-                const or_denyButton = document.querySelector(`div.or_deny${index}`);
-                or_denyButton.addEventListener('click', async (e) => {
-                    const endpoint = `/booking-request/${req_id}`;
-                    fetch(endpoint, {
-                        method: 'DELETE'
-                    });
-                });
-            }
-        }) 
+        otherRequests.innerHTML = html; 
     }
     
     setupOtherReq();
