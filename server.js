@@ -186,7 +186,6 @@ app.get('/booking-request/:bookingId', (req, res) => {
     BookingReq.find().then((result) => {
         // if the booking is found, show the page
         if(result.includes(entry => entry.id === bookindId)) {
-            console.log('hi')
             // render the specific booking id's confirm/deny 
             BookingReq.findById(bookingId).then(booking => {
                 if (booking) {
@@ -199,9 +198,10 @@ app.get('/booking-request/:bookingId', (req, res) => {
             }) 
         }
         else {
-            const pendingReqs = result.filter(request => request.response === null);
-            const answeredReqs = result.filter(request => request.response === false || request.response === true);
-
+            let pendingReqs = result.filter(request => request.response === null);
+            pendingReqs.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+            let answeredReqs = result.filter(request => request.response === false || request.response === true);
+            answeredReqs.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
             res.render('home', {
                 title: 'Home',
@@ -226,16 +226,16 @@ app.post('/booking-request/:bookingId/:response', (req, res) => {
     const update = { response: isConfirm};
     BookingReq.findOneAndUpdate(filter, update).then(() => {
         if(isConfirm) {
-            confirmBooking(bookingId);
+            confirmBooking(bookingId, res);
         }
         else {
-            denyBooking(bookingId);
+            denyBooking(bookingId, res);
         }
     })
 })
 
-// confirm a new booking based off of the 
-const confirmBooking = (bookingId) => {
+// confirm a new booking based off of the id
+const confirmBooking = (bookingId, res) => {
     // Save booking to Booking DB and send out confirmation email
     BookingReq.findById(bookingId).then(booking => {
         const datesString = getDatesString(booking.startDate, booking.endDate);
