@@ -144,7 +144,6 @@
         populateAnswered();
 
         function confirmOrDeny(props) {
-            console.log('in confirmOrDeny', props)
             if(confirm(`You want to ${props.isConfirm ? 'confirm' : 'deny'} ${props.guestName}'s visit?`) === true) {
                 // do backend work
                 const endpoint = `/booking-request/${props.id}/${props.isConfirm}`;

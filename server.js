@@ -335,7 +335,6 @@ const denyBooking = (bookingId) => {
 
 // contact us 
 app.post('/contact-us', (req, res) => {
-    console.log('OLIVER contact us tests', {req, body: req.body, res});
     const contactReq = new ContactReq({
         name: req.body.name,
         email: req.body.email,

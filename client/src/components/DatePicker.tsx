@@ -102,10 +102,6 @@ const DatePicker = () => {
         const emailCheck = emailIsValid(emailAddress);
         // check if there is an invalid entry
         if(!areDatesValid || !guestName || emailCheck) {
-            console.log({
-                datesCheck: !areDatesValid,
-                guestNameCheck: !guestName,
-                emailCheck: !emailCheck});
             // check if dates are invalid
             if(!areDatesValid) {
                 setShowDatesError(true);
@@ -146,7 +142,7 @@ const DatePicker = () => {
                 'Content-Type': 'application/json'
             }
         }).then(response => {
-            console.log('(OBM) response:', response.json());
+            console.log('RESPONSE: ', response.json());
             navigate('/reqResponse', { state: {succReq: true }});
         }).catch(error => {
             console.error(error);

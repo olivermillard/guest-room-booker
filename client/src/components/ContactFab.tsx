@@ -1,6 +1,5 @@
 import {
     Box,
-    // Center,
     HStack,
     Stagger,
     useDisclose,
@@ -16,11 +15,7 @@ const ContactFab = () => {
     const [ showModal, setShowModal ] = useState(false);
     const [ recipient, setRecipient ] = useState<ContactName>('Oliver');
 
-    const {
-        isOpen,
-        onToggle
-    } = useDisclose();
-
+    const { isOpen, onToggle } = useDisclose();
     const baseButtonText = isOpen ? 'Nevermind' : 'Contact Us';
 
     const fabButton = (name: ContactName) => {

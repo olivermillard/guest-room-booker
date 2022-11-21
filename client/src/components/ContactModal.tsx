@@ -55,9 +55,8 @@ const ContactModal = (props: ContactModalProps) => {
                 setShowMessageError(false);
             }
 
-
-
             let recipientEmails = [];
+
             if (props.recipient === 'Oliver') {
                 recipientEmails = [ OLIVER_EMAIL ];
             }
@@ -75,7 +74,7 @@ const ContactModal = (props: ContactModalProps) => {
                 recipientName: recipientName,
                 recipientEmails: recipientEmails,
             };
-            console.log('INFO', postData);
+
             fetch(`${BACKEND_URL}/contact-us`, { // ./bookings
                 method: 'POST',
                 body: JSON.stringify(postData),
@@ -83,7 +82,7 @@ const ContactModal = (props: ContactModalProps) => {
                     'Content-Type': 'application/json'
                 }
             }).then(response => {
-                console.log('(OBM) response:', response.json());
+                console.log('RESPONSE', response.json());
             }).catch(error => {
                 console.error(error);
             });
